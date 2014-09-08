@@ -9,15 +9,17 @@ object Agent {
 
     println("Java agent installed.")
 
-    // Javassist
-    val classPool: ClassPool = new ClassPool(true)
-    val stringClass: CtClass = classPool.get("java.lang.String")
-    val hashCodeMethod: CtMethod = stringClass.getDeclaredMethod("hashCode", null)
-    hashCodeMethod.setBody("{return 0;}")
-    val bytes = stringClass.toBytecode
-    val classDefinitions = Seq(new ClassDefinition(classOf[String], bytes))
-    inst.redefineClasses(classDefinitions: _*)
-    return
+    if (false) {
+      // Javassist
+      val classPool: ClassPool = new ClassPool(true)
+      val stringClass: CtClass = classPool.get("java.lang.String")
+      val hashCodeMethod: CtMethod = stringClass.getDeclaredMethod("hashCode", null)
+      hashCodeMethod.setBody("{return 0;}")
+      val bytes = stringClass.toBytecode
+      val classDefinitions = Seq(new ClassDefinition(classOf[String], bytes))
+      inst.redefineClasses(classDefinitions: _*)
+    }
+
     // ASM
     inst.addTransformer(new ClassFileTransformer {
       def transform(loader: ClassLoader,
@@ -26,14 +28,17 @@ object Agent {
                     protectionDomain: ProtectionDomain,
                     classfileBuffer: Array[Byte]): Array[Byte] = {
 
-        if (className == "java.lang.Object") {
-          println("modifying object...")
+//        println(s"modifying $className...")
+
+        if (className == "DefaultHashCode") {
+          println("***")
           // ASM Code
-//          val reader = new ClassReader(classfileBuffer)
-//          val writer = new ClassWriter(reader, 0)
+          val reader = new ClassReader(classfileBuffer)
+          val writer = new ClassWriter(reader, 0)
 //          val visitor = new ClassPrinter(writer)
-//          reader.accept(visitor, 0)
-//          writer.toByteArray
+          val visitor = new ClassModifier(writer)
+          reader.accept(visitor, 0)
+          writer.toByteArray
           null
         } else {
           null

@@ -1,11 +1,17 @@
+class DefaultHashCode(val a: Int) {
+  def foo = a.toInt
+
+  override def hashCode(): Int = super.hashCode()
+}
+
 object HashCodeRunner extends App {
 
-//  class DefaultHashCode(val a: Int)
-//
-//  val default = new DefaultHashCode(42)
-//  println(s"hashCode(): ${default.##}")
+  val default = new DefaultHashCode(42)
+  println(s"hashCode(): ${default.hashCode()}")
 
 //  println("guess my hash code".##)
-  println(new String("guess my hash code").hashCode)
+  private val s = new String("guess my hash code")
+
+  println(s.hashCode)
 
 }
