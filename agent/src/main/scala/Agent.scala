@@ -17,26 +17,28 @@ object Agent {
     val bytes = stringClass.toBytecode
     val classDefinitions = Seq(new ClassDefinition(classOf[String], bytes))
     inst.redefineClasses(classDefinitions: _*)
-
+    return
     // ASM
-//    inst.addTransformer(new ClassFileTransformer {
-//      def transform(loader: ClassLoader,
-//                    className: String,
-//                    classBeingRedefined: Class[_],
-//                    protectionDomain: ProtectionDomain,
-//                    classfileBuffer: Array[Byte]): Array[Byte] = {
-//
-//        if (className == "java.lang.Object") {
-//          // ASM Code
+    inst.addTransformer(new ClassFileTransformer {
+      def transform(loader: ClassLoader,
+                    className: String,
+                    classBeingRedefined: Class[_],
+                    protectionDomain: ProtectionDomain,
+                    classfileBuffer: Array[Byte]): Array[Byte] = {
+
+        if (className == "java.lang.Object") {
+          println("modifying object...")
+          // ASM Code
 //          val reader = new ClassReader(classfileBuffer)
 //          val writer = new ClassWriter(reader, 0)
 //          val visitor = new ClassPrinter(writer)
 //          reader.accept(visitor, 0)
 //          writer.toByteArray
-//        } else {
-//          null
-//        }
-//      }
-//    })
+          null
+        } else {
+          null
+        }
+      }
+    })
   }
 }

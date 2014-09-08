@@ -31,7 +31,7 @@ object build extends Build {
     libraryDependencies ++= Seq(ScalazCore, ScalazConcurrent, Specs, JUnit, Scalacheck, MockitoAll, CommonsIo,
       JodaConvert, JodaTime, CommonsLang, Fastutil, CommonsExec, Scopt, SpringCore % "test", Slf4J, Javassist),
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
-    ) settings (standardSettings: _*)
+    ) settings (standardSettings ++ useAgentSettings: _*)
 
   lazy val agent = Project(
     id = "agent",
@@ -39,15 +39,11 @@ object build extends Build {
   ) settings(
     libraryDependencies ++= Seq(ScalazCore, ScalazConcurrent, Specs, JUnit, Scalacheck, MockitoAll, CommonsIo,
       JodaConvert, JodaTime, CommonsLang, Fastutil, CommonsExec, Scopt, SpringCore % "test", Slf4J, Asm, Javassist),
-    //    packageOptions in (Compile, packageBin) +=
-    //      Package.ManifestAttributes( java.util.jar.Attributes.Name.SEALED -> "true" ),
     packageOptions in(Compile, packageBin) += {
       import java.util.jar.{Attributes, Manifest}
       val manifest = new Manifest
-//            manifest.getMainAttributes().put(Attributes.Name.SEALED, "true")
       manifest.getMainAttributes.put(new Attributes.Name("Premain-Class"), "Agent")
       manifest.getMainAttributes.put(new Attributes.Name("Can-Redefine-Classes"), "true")
-      //      manifest.getAttributes("Can-Redefine-Classes").put(Attributes.Name.SEALED, "true")
       Package.JarManifest(manifest)
     }
     ) settings (standardSettings: _*)
@@ -70,7 +66,7 @@ object build extends Build {
           file.data.absolutePath
       }.getOrElse(sys.error("Could not find javassist.jar"))
 
-      Seq(addAgent, dummy/*, "-jar " + asm*/)
+      Seq(addAgent, dummy /*, "-jar " + asm*/)
     }
   )
 
@@ -81,6 +77,6 @@ object build extends Build {
     aggregate = Seq[ProjectReference](core, agent)
   ) settings (
     dependencyOverrides := Set(Slf4J)
-    ) settings (standardSettings ++ useAgentSettings: _*)
+    ) settings (standardSettings: _*)
 }
 
