@@ -133,4 +133,9 @@ object DependencyManagement {
    * http://saddle.github.io
    */
   def Saddle = "org.scala-saddle" %% "saddle-core" % "1.3.+"
+
+  def Asm = "org.ow2.asm" % "asm" % "5.0.3"
+
+  def Javassist = "javassist" % "javassist" % "3.12.1.GA"//"3.18.2-GA"
+
 }

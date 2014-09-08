@@ -29,27 +29,48 @@ object build extends Build {
     dependencies = Seq[ClasspathDep[ProjectReference]](agent % "compile->compile;test->test")
   ) settings(
     libraryDependencies ++= Seq(ScalazCore, ScalazConcurrent, Specs, JUnit, Scalacheck, MockitoAll, CommonsIo,
-      JodaConvert, JodaTime, CommonsLang, Fastutil, CommonsExec, Scopt, SpringCore % "test", Slf4J),
+      JodaConvert, JodaTime, CommonsLang, Fastutil, CommonsExec, Scopt, SpringCore % "test", Slf4J, Javassist),
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
     ) settings (standardSettings: _*)
 
   lazy val agent = Project(
     id = "agent",
     base = file("agent")
-  ) settings (
+  ) settings(
     libraryDependencies ++= Seq(ScalazCore, ScalazConcurrent, Specs, JUnit, Scalacheck, MockitoAll, CommonsIo,
-      JodaConvert, JodaTime, CommonsLang, Fastutil, CommonsExec, Scopt, SpringCore % "test", Slf4J)
+      JodaConvert, JodaTime, CommonsLang, Fastutil, CommonsExec, Scopt, SpringCore % "test", Slf4J, Asm, Javassist),
+    //    packageOptions in (Compile, packageBin) +=
+    //      Package.ManifestAttributes( java.util.jar.Attributes.Name.SEALED -> "true" ),
+    packageOptions in(Compile, packageBin) += {
+      import java.util.jar.{Attributes, Manifest}
+      val manifest = new Manifest
+//            manifest.getMainAttributes().put(Attributes.Name.SEALED, "true")
+      manifest.getMainAttributes.put(new Attributes.Name("Premain-Class"), "Agent")
+      manifest.getMainAttributes.put(new Attributes.Name("Can-Redefine-Classes"), "true")
+      //      manifest.getAttributes("Can-Redefine-Classes").put(Attributes.Name.SEALED, "true")
+      Package.JarManifest(manifest)
+    }
     ) settings (standardSettings: _*)
+
+
+  //  Can-Redefine-Classes: true
 
   // Scalac command line options to install our compiler plugin.
   lazy val useAgentSettings = Seq(
+    libraryDependencies ++= Seq(Javassist),
     fork in run := true,
-    javaOptions in run <++= (Keys.`package` in(agent, Compile)) map { (jar: File) =>
+    javaOptions in run ++= {
+      val jar = (Keys.`package` in(agent, Compile)).value
       val addAgent = "-javaagent:" + jar.getAbsolutePath
       // add plugin timestamp to compiler options to trigger recompile of
       // main after editing the agent. (Otherwise a 'clean' is needed.)
-      val dummy = "-Jdummy=" + jar.lastModified
-      Seq(addAgent, dummy)
+      val dummy = "-Ddummy=" + jar.lastModified
+      val asm = (managedClasspath in Compile).value.collectFirst {
+        case file: Attributed[File] if file.data.absolutePath.contains("javassist") =>
+          file.data.absolutePath
+      }.getOrElse(sys.error("Could not find javassist.jar"))
+
+      Seq(addAgent, dummy/*, "-jar " + asm*/)
     }
   )
 
